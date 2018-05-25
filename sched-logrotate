@@ -1,0 +1,11 @@
+/tmp/sched.log
+{
+        rotate 7
+        weekly
+        missingok
+        notifempty
+        delaycompress
+        compress
+	su root root
+}
+

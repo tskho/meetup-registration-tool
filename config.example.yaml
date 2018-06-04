@@ -1,0 +1,12 @@
+live:
+    tw_ac_sid:  ''
+    tw_ac_token: ''
+    tw_sms_from: ''
+    tw_sms_to: ''
+    meetup_api_key: ''
+    meetup_group_id: '' # Group ID is string
+    meetup_member_id: 0 # Member ID is integer
+    meetup_event_search_pattern: 'string'
+
+
+

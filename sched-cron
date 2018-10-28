@@ -1,2 +1,2 @@
-*/10 * * * 1-5,7 cd /root/projects/meetup && /usr/local/bin/pipenv run python sched.py
-*/2  * * * 6       cd /root/projects/meetup && /usr/local/bin/pipenv run python sched.py
+*/10 * * * 1-3,5,7 cd /root/projects/meetup && /usr/local/bin/pipenv run python sched.py
+*/2  * * * 4,6     cd /root/projects/meetup && /usr/local/bin/pipenv run python sched.py

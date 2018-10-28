@@ -14,16 +14,16 @@ except:
     logging.fatal("no configuration file loaded")
     sys.exit(1)
 
-def notify(msg):
-    tw_send_sms(msg)
+def notify(msg, config):
+    tw_send_sms(msg, config)
     logging.info("Notification sent: %s" % msg)
 
-def tw_send_sms(msg):
-    global parse_config
-    tw_ac_sid = parse_config['live']['tw_ac_sid']
-    tw_ac_token = parse_config['live']['tw_ac_token']
-    tw_sms_from = parse_config['live']['tw_sms_from']
-    tw_sms_to = parse_config['live']['tw_sms_to']
+def tw_send_sms(msg, config):
+
+    tw_ac_sid = config['tw_ac_sid']
+    tw_ac_token = config['tw_ac_token']
+    tw_sms_from = config['tw_sms_from']
+    tw_sms_to = config['tw_sms_to']
  
     client = Client(tw_ac_sid, tw_ac_token)
     client.messages.create(to = tw_sms_to,
@@ -63,6 +63,7 @@ def registerForMeetup(meetup_api_key, group_id, member_id, event_search_pattern,
     logging.info('Upcoming events found: %s' % str(event_ids))
 
     rsvpStatus = {}
+    msgStatus = {} 
     for event_id in event_ids[:max_events]:
         currentRsvps = client.GetRsvps(event_id=event_id)
         logging.debug('event_id: %s, currentRsvps: %s' % (event_id, currentRsvps.results))
@@ -72,22 +73,20 @@ def registerForMeetup(meetup_api_key, group_id, member_id, event_search_pattern,
             logging.info('event_id: %s, RSVP not found, attempting to RSVP' % event_id)
             myRsvp_id = client.CreateRsvp(event_id=event_id, guests=0, rsvp='yes')
             if hasattr(myRsvp_id, 'problem'):
-                msg = "event_id: %s, RSVP attempt failed with %s, %s" % (event_id, myRsvp_id.problem, myRsvp_id.details)
-                logging.error(msg)
-                notify(msg)
+                msgStatus[event_id] = "event_id: %s, RSVP attempt failed with %s, %s" % (event_id, myRsvp_id.problem, myRsvp_id.details)
+                logging.error(msgStatus[event_id])
                 rsvpStatus[event_id] = False
             else:
                 currentRsvps = client.GetRsvps(event_id=event_id)
                 myCurrentRsvp = checkExistingRSVP(currentRsvps.results, member_id)
-                msg = "event_id: %s, RSVP attempt successful, current status: %s" % (event_id, myCurrentRsvp)
-                logging.info(msg)
-                notify(msg)
+                msgStatus[event_id] = "event_id: %s, RSVP attempt successful, current status: %s" % (event_id, myCurrentRsvp)
+                logging.info(msgStatus[event_id])
                 # email / push notify
                 rsvpStatus[event_id] = myCurrentRsvp
         else:
             logging.info("group: %s, event: %s, rsvp: %s" % (group_id, event_id, myCurrentRsvp))
             rsvpStatus[event_id] = myCurrentRsvp
-    return rsvpStatus
+    return [rsvpStatus, msgStatus]
 
 def main(config):
     meetup_api_key = config['meetup_api_key']
@@ -96,7 +95,10 @@ def main(config):
     member_id = config['meetup_member_id']
     event_search_pattern = config['meetup_event_search_pattern']
 
-    print registerForMeetup(meetup_api_key, group_id, member_id, event_search_pattern)
+    rsvpStatus, msgStatus = registerForMeetup(meetup_api_key, group_id, member_id, event_search_pattern)
+    for msg in msgStatus:
+        notify(msgStatus[msg],config)
+    print rsvpStatus
 
 def _test():
     meetup_api_key = ''
@@ -109,6 +111,8 @@ def _test():
 
 
 if __name__ == '__main__':
-    main(config=parse_config['live'])
+    for profile in parse_config:
+        main(config = parse_config[profile])
+    #main(config=parse_config['live'])
     #TODO: 'live' must be a command line argument to select profile
     

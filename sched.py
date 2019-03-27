@@ -55,7 +55,7 @@ def checkExistingRSVP(event_data, member_id):
             return x['response']
     return False
 
-def registerForMeetup(meetup_api_key, group_id, member_id, event_search_pattern, max_events = 12):
+def registerForMeetup(meetup_api_key, group_id, member_id, event_search_pattern, max_events = 12, guests = 0):
     client = meetup.api.Client(meetup_api_key)
 
     events = client.GetEvents(group_id=group_id, status="upcoming")
@@ -71,7 +71,7 @@ def registerForMeetup(meetup_api_key, group_id, member_id, event_search_pattern,
         logging.info('event_id: %s, myRsvp: %s' % (event_id, myCurrentRsvp))	
         if myCurrentRsvp == False:
             logging.info('event_id: %s, RSVP not found, attempting to RSVP' % event_id)
-            myRsvp_id = client.CreateRsvp(event_id=event_id, guests=0, rsvp='yes')
+            myRsvp_id = client.CreateRsvp(event_id=event_id, guests=guests, rsvp='yes')
             if hasattr(myRsvp_id, 'problem'):
                 msgStatus[event_id] = "event_id: %s, RSVP attempt failed with %s, %s" % (event_id, myRsvp_id.problem, myRsvp_id.details)
                 logging.error(msgStatus[event_id])
@@ -94,8 +94,9 @@ def main(config):
     group_id = config['meetup_group_id']
     member_id = config['meetup_member_id']
     event_search_pattern = config['meetup_event_search_pattern']
+    guests = config['meetup_guests']
 
-    rsvpStatus, msgStatus = registerForMeetup(meetup_api_key, group_id, member_id, event_search_pattern)
+    rsvpStatus, msgStatus = registerForMeetup(meetup_api_key, group_id, member_id, event_search_pattern, guests=guests)
     for msg in msgStatus:
         notify(msgStatus[msg],config)
     print rsvpStatus
